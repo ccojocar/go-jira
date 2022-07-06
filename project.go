@@ -127,6 +127,37 @@ func (s *ProjectService) ListWithOptions(options *GetQueryOptions) (*ProjectList
 	return s.ListWithOptionsWithContext(context.Background(), options)
 }
 
+// GetWithOptionsWithContext returns a full representation of the project for the given issue key.
+func (s *ProjectService) GetWithOptionsWithContext(ctx context.Context, projectID string, options *GetQueryOptions) (*Project, *Response, error) {
+	apiEndpoint := fmt.Sprintf("rest/api/2/project/%s", projectID)
+	req, err := s.client.NewRequestWithContext(ctx, "GET", apiEndpoint, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if options != nil {
+		q, err := query.Values(options)
+		if err != nil {
+			return nil, nil, err
+		}
+		req.URL.RawQuery = q.Encode()
+	}
+
+	project := new(Project)
+	resp, err := s.client.Do(req, project)
+	if err != nil {
+		jerr := NewJiraError(resp, err)
+		return nil, resp, jerr
+	}
+
+	return project, resp, nil
+}
+
+// GetWithOptions wraps GetWithOptionsWithContext using the background context.
+func (s *ProjectService) GetWithOptions(projectID string, options *GetQueryOptions) (*Project, *Response, error) {
+	return s.GetWithOptionsWithContext(context.Background(), projectID, options)
+}
+
 // GetWithContext returns a full representation of the project for the given issue key.
 // Jira will attempt to identify the project by the projectIdOrKey path parameter.
 // This can be an project id, or an project key.
